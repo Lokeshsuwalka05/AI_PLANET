@@ -1,5 +1,5 @@
-const API_BASE_URL = 'http://localhost:8000';
-
+// API base URL - use environment variable in production
+const API_BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, '');
 export interface ApiDocument {
   id: number;
   filename: string;
