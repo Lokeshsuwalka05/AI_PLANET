@@ -72,7 +72,8 @@ The application is deployed using:
 
 ## Live Demo
 
-[Add your deployed application URL here]
+For Frontend:-[https://ask-to-pdf.netlify.app/]
+For Backend:-[https://ai-planet-c5ya.onrender.com/]
 
 ## Project Structure
 
