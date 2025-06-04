@@ -1,54 +1,91 @@
-# React + TypeScript + Vite
+# PDF Question Answering System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack application that allows users to upload PDF documents and ask questions about their content using AI.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- PDF document upload and processing
+- AI-powered question answering using Google's Gemini API
+- Real-time chat interface
+- Document management
+- Responsive design
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Frontend
+- React with TypeScript
+- Vite
+- Tailwind CSS
+- shadcn/ui components
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+### Backend
+- FastAPI
+- SQLite (for document storage)
+- LangChain
+- Google Gemini API
+- PDF processing with pdfplumber
+
+## Local Development
+
+### Backend Setup
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Create a `.env` file with your Google API key:
+   ```
+   GOOGLE_API_KEY=your_api_key_here
+   ```
+
+4. Start the backend server:
+   ```bash
+   uvicorn main:app --reload --port 8000
+   ```
+
+### Frontend Setup
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+## Deployment
+
+The application is deployed using:
+- Backend: Render.com (Free tier)
+- Frontend: Vercel (Free tier)
+
+## Live Demo
+
+[Add your deployed application URL here]
+
+## Project Structure
+
 ```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+.
+├── backend/
+│   ├── main.py           # FastAPI application
+│   ├── requirements.txt  # Python dependencies
+│   └── uploads/         # PDF storage directory
+└── frontend/
+    ├── src/
+    │   ├── components/  # React components
+    │   ├── lib/        # API and utilities
+    │   └── pages/      # Page components
+    └── package.json    # Node.js dependencies
 ```

@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { ChatInterface } from '@/components/ChatInterface';
 import { DocumentList } from '@/components/DocumentList';
 import { Header } from '@/components/Header';
-import { storage, type StoredDocument } from '@/lib/storage';
 import { toast } from 'sonner';
+import { api, type ApiDocument } from '@/lib/api';
 
 export interface Document {
   id: string;
@@ -23,25 +23,56 @@ const Index = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load documents from storage on component mount
+  // Load documents from API on component mount
   useEffect(() => {
-    const storedDocs = storage.getDocuments();
-    setDocuments(storedDocs);
+    loadDocuments();
   }, []);
+
+  const loadDocuments = async () => {
+    try {
+      const apiDocs = await api.getDocuments();
+      const formattedDocs = apiDocs.map(doc => ({
+        id: doc.id.toString(),
+        filename: doc.filename,
+        uploadTime: new Date(doc.upload_date),
+        size: doc.text_length
+      }));
+      setDocuments(formattedDocs);
+    } catch (error) {
+      console.error('Error loading documents:', error);
+      toast.error("Failed to load documents");
+    }
+  };
 
   const handleDocumentUpload = async (file: File) => {
     try {
-      const storedDoc = await storage.saveDocument(file);
-      setDocuments(prev => [...prev, storedDoc]);
-      setSelectedDocument(storedDoc);
+      setIsLoading(true);
+      const response = await api.uploadPdf(file);
+
+      if (!response || typeof response.id === 'undefined') {
+        throw new Error('Invalid response from server');
+      }
+
+      const newDoc: Document = {
+        id: String(response.id),
+        filename: response.filename || file.name,
+        uploadTime: new Date(response.upload_date || new Date()),
+        size: response.text_length || 0
+      };
+
+      setDocuments(prev => [...prev, newDoc]);
+      setSelectedDocument(newDoc);
       setMessages([]);
 
       toast.success("Document uploaded successfully");
     } catch (error) {
       console.error('Error uploading document:', error);
-      toast.error("Failed to upload document");
+      toast.error(error instanceof Error ? error.message : "Failed to upload document");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -60,7 +91,9 @@ const Index = () => {
     event.target.value = '';
   };
 
-  const handleQuestionSubmit = (question: string) => {
+  const handleQuestionSubmit = async (question: string) => {
+    if (!selectedDocument) return;
+
     // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -70,25 +103,32 @@ const Index = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
 
-    // Simulate AI response (replace with actual API call)
-    setTimeout(() => {
+    try {
+      const response = await api.askQuestion(question);
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: `Based on the content of "${selectedDocument?.filename}", I can help answer your question about: ${question}. This is a mock response that will be replaced with actual AI-generated answers when connected to your FastAPI backend.`,
+        content: response.answer,
         timestamp: new Date(),
       };
+
       setMessages(prev => [...prev, aiMessage]);
-    }, 1000);
+    } catch (error) {
+      console.error('Error getting answer:', error);
+      toast.error(error instanceof Error ? error.message : "Failed to get answer");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDeleteDocument = (document: Document) => {
+  const handleDeleteDocument = async (document: Document) => {
     try {
-      // Delete from storage
-      storage.deleteDocument(document.id);
+      await api.deleteDocument(document.id);
 
-      // Update state
+      // Remove from state
       setDocuments(prev => prev.filter(doc => doc.id !== document.id));
 
       // If the deleted document was selected, clear selection
@@ -100,7 +140,7 @@ const Index = () => {
       toast.success("Document deleted successfully");
     } catch (error) {
       console.error('Error deleting document:', error);
-      toast.error("Failed to delete document");
+      toast.error(error instanceof Error ? error.message : "Failed to delete document");
     }
   };
 
@@ -131,12 +171,13 @@ const Index = () => {
 
           {/* Main Content - Chat Interface */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm border h-[800px] flex flex-col">
+            <div className="bg-white rounded-lg shadow-sm border h-[500px] flex flex-col">
               {selectedDocument ? (
                 <ChatInterface
                   document={selectedDocument}
                   messages={messages}
                   onQuestionSubmit={handleQuestionSubmit}
+                  isLoading={isLoading}
                 />
               ) : (
                 <div className="flex-1 flex items-center justify-center text-gray-500">
